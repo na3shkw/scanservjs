@@ -7,7 +7,7 @@ services:
     env_file:
       - .env
     volumes:
-      - ./scans:/var/lib/scanservjs/output
+      - ${SCANS_PATH:-./scans}:/var/lib/scanservjs/output
       - ./config:/etc/scanservjs
     ports:
       - 8080:8080
