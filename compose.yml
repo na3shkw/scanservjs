@@ -2,6 +2,7 @@ services:
   scanservjs:
     build:
       context: .
+      target: scanservjs-core
     container_name: scanservjs
     env_file:
       - .env

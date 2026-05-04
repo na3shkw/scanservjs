@@ -1,3 +1,5 @@
+# syntax=docker/dockerfile:1
+
 # Builder image
 #
 # Builds the JavaScript app and installs production-only node dependencies.
@@ -10,7 +12,8 @@ COPY package*.json build.js "$APP_DIR/"
 COPY app-server/package*.json "$APP_DIR/app-server/"
 COPY app-ui/package*.json "$APP_DIR/app-ui/"
 
-RUN npm clean-install .
+RUN --mount=type=cache,target=/root/.npm \
+    npm clean-install .
 
 COPY app-server/ "$APP_DIR/app-server/"
 COPY app-ui/ "$APP_DIR/app-ui/"
@@ -22,18 +25,17 @@ RUN npm run build \
 # Base image
 #
 # Installs OS-level dependencies shared across all targets.
+# Uses the same base as the builder to maximize layer cache reuse on the NAS.
 # ==============================================================================
-FROM debian:bookworm-slim AS scanservjs-base
-RUN apt-get update \
-  && apt-get install -yq \
-    nodejs \
+FROM node:18-bookworm-slim AS scanservjs-base
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update \
+  && apt-get install -yq --no-install-recommends \
     gosu \
     imagemagick \
     sane-airscan \
     sane-utils \
-    tesseract-ocr \
-    tesseract-ocr-jpn \
-  && rm -rf /var/lib/apt/lists/* \
   && echo "airscan" >> /etc/sane.d/dll.conf \
   && sed -i 's/^#discovery = enable/discovery = disable/' /etc/sane.d/airscan.conf
 
@@ -54,8 +56,6 @@ ENV \
   SCANIMAGE_LIST_IGNORE="" \
   # This gets added to scanservjs/server/config.js:devices
   DEVICES="" \
-  # Override OCR language
-  OCR_LANG="" \
   # Runtime user/group (0 = run as root)
   PUID=0 \
   PGID=0
@@ -106,10 +106,10 @@ FROM scanservjs-core
 # Adds HP scanner libs. Not built by default — specify --target scanservjs-hplip.
 # ==============================================================================
 FROM scanservjs-core AS scanservjs-hplip
-RUN apt-get update \
-  && apt-get install -yq libsane-hpaio \
-  && apt-get clean \
-  && rm -rf /var/lib/apt/lists/* \
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update \
+  && apt-get install -yq --no-install-recommends libsane-hpaio \
   && echo hpaio >> /etc/sane.d/dll.conf
 
 # brscan4 image
@@ -117,12 +117,12 @@ RUN apt-get update \
 # Adds Brother scanner driver. Not built by default — specify --target scanservjs-brscan4.
 # ==============================================================================
 FROM scanservjs-core AS scanservjs-brscan4
-RUN apt-get update \
-  && apt-get install -yq curl \
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update \
+  && apt-get install -yq --no-install-recommends ca-certificates curl \
   && curl -fSsL "https://download.brother.com/welcome/dlf105200/brscan4-0.4.11-1.amd64.deb" -o /tmp/brscan4.deb \
-  && apt-get remove curl -yq \
-  && apt-get clean \
-  && rm -rf /var/lib/apt/lists/* \
+  && apt-get remove curl ca-certificates -yq \
   && dpkg -i /tmp/brscan4.deb \
   && rm /tmp/brscan4.deb \
   && echo brscan4 >> /etc/sane.d/dll.conf
