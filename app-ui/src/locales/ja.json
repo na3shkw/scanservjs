@@ -1,0 +1,221 @@
+{
+  "$vuetify": {
+    "dataFooter": {
+      "pageText": "{0} - {1} / {2}",
+      "itemsPerPageAll": "@:files.items-per-page-all"
+    },
+    "noDataText": "@:global.no-data-text"
+  },
+
+  "global": {
+    "application-name": "scanservjs",
+    "no-data-text": "データがありません"
+  },
+
+  "about": {
+    "main": "scanservjs はスキャナー用のシンプルなウェブUIです。ドライバーや複雑なインストールなしに、1台または複数のスキャナー（SANEを使用）をネットワーク上で共有できます。TIF、JPG、PNG、PDF、TXT（Tesseract OCR使用）への保存に対応しており、圧縮設定はすべてカスタマイズ可能です。複数ページのスキャンとSANE対応のすべてのデバイスをサポートしています。",
+    "issue": "問題を報告またはソースコードを表示:",
+    "api": "OpenAPI ドキュメント:",
+    "system-info": "システム情報"
+  },
+
+  "colors": {
+    "accent-4": "デフォルト",
+    "red": "赤",
+    "pink": "ピンク",
+    "purple": "紫",
+    "deep-purple": "ディープパープル",
+    "indigo": "インディゴ",
+    "blue": "青",
+    "light-blue": "ライトブルー",
+    "cyan": "シアン",
+    "teal": "ティール",
+    "green": "緑",
+    "light-green": "ライトグリーン",
+    "lime": "ライム",
+    "yellow": "黄",
+    "amber": "アンバー",
+    "orange": "オレンジ",
+    "deep-orange": "ディープオレンジ",
+    "brown": "ブラウン",
+    "blue-grey": "ブルーグレー",
+    "grey": "グレー"
+  },
+
+  "batch-dialog": {
+    "btn-cancel": "キャンセル",
+    "btn-finish": "完了",
+    "btn-rescan": "ページを再スキャン",
+    "btn-next": "次へ"
+  },
+
+  "files": {
+    "filename": "ファイル名",
+    "date": "日付",
+    "size": "サイズ",
+    "items-per-page": "1ページあたりのファイル数",
+    "items-per-page-all": "すべて",
+    "message:action": "{1} に対して {0} を実行しました",
+    "message:deleted": "{0} を削除しました",
+    "message:renamed": "ファイル名を変更しました",
+    "button:action-selected": "アクションを実行...",
+    "button:delete-selected": "選択を削除",
+    "dialog:rename": "ファイル名の変更",
+    "dialog:rename-cancel": "キャンセル",
+    "dialog:rename-save": "保存",
+    "actions": "アクション",
+    "thumbnail-show": "サムネイルを表示",
+    "thumbnail-size": "サムネイルのサイズ"
+  },
+
+  "navigation": {
+    "scan": "スキャン",
+    "files": "ファイル",
+    "settings": "設定",
+    "about": "このアプリについて",
+    "version": "バージョン"
+  },
+
+  "batch-mode": {
+    "none": "なし",
+    "manual": "手動（確認あり）",
+    "auto": "自動（ドキュメントフィーダー）",
+    "auto-collate-standard": "自動（丁合い 1, 3... 4, 2）",
+    "auto-collate-reverse": "自動（逆順 1, 3... 2, 4）"
+  },
+
+  "filter": {
+    "auto-level": "自動レベル補正",
+    "auto-contrast": "自動コントラスト",
+    "more-contrast": "コントラスト強調",
+    "threshold": "しきい値",
+    "blur": "ぼかし"
+  },
+
+  "mode": {
+    "color": "カラー",
+    "halftone": "ハーフトーン",
+    "gray": "グレー",
+    "lineart": "ラインアート",
+
+    "24bitcolor":"@:mode.color",
+    "black & white": "@:mode.lineart",
+    "gray(error diffusion)": "@:mode.halftone",
+    "true gray": "@:mode.gray",
+    "24bit color(fast)": "@:mode.color"
+  },
+
+  "adf-mode": {
+    "simplex": "片面",
+    "duplex": "両面"
+  },
+
+  "source": {
+    "flatbed": "フラットベッド",
+    "adf": "ADF",
+    "auto": "自動",
+    "left-aligned": "左寄せ",
+    "centrally-aligned": "中央揃え",
+    "duplex": "両面",
+    "transparency unit": "透過ユニット",
+
+    "automatic document feeder": "@:source.adf",
+    "automatic document feeder(left aligned)": "@:source.adf (@:source.left-aligned)",
+    "automatic document feeder(left aligned,duplex)": "@:source.adf (@:source.left-aligned, @:source.duplex)",
+    "automatic document feeder(centrally aligned)": "@:source.adf (@:source.centrally-aligned)",
+    "automatic document feeder(centrally aligned,duplex)": "@:source.adf (@:source.centrally-aligned, @:source.duplex)"
+  },
+
+  "pipeline": {
+    "high-quality": "高品質",
+    "medium-quality": "中品質",
+    "low-quality": "低品質",
+    "uncompressed": "非圧縮",
+    "lzw-compressed": "LZW圧縮",
+    "ocr": "OCR",
+    "text-file": "テキストファイル"
+  },
+
+  "paper-size": {
+    "letter": "レター",
+    "legal": "リーガル",
+    "tabloid": "タブロイド",
+    "ledger": "レジャー",
+    "junior-legal": "ジュニアリーガル",
+    "half-letter": "ハーフレター",
+    "portrait": "縦",
+    "landscape": "横"
+  },
+
+  "scan": {
+    "device": "デバイス",
+    "source": "給紙方法",
+    "resolution": "解像度",
+    "mode": "モード",
+    "adf-mode": "ADFモード",
+    "dynamic-lineart": "ダイナミックラインアート",
+    "dynamic-lineart:enabled": "有効",
+    "dynamic-lineart:disabled": "無効",
+    "batch": "バッチ",
+    "filters": "フィルター",
+    "format": "形式",
+    "btn-preview": "プレビュー",
+    "btn-clear": "クリア",
+    "btn-scan": "スキャン",
+    "top": "上",
+    "left": "左",
+    "width": "幅",
+    "height": "高さ",
+    "paperSize": "用紙サイズ",
+    "brightness": "明るさ",
+    "contrast": "コントラスト",
+    "message:loading-devices": "デバイスを読み込み中...",
+    "message:no-devices": "デバイスが見つかりませんでした",
+    "message:deleted-preview": "プレビューを削除しました",
+    "message:turn-documents": "原稿を裏返してください",
+    "message:preview-of-page": "ページのプレビュー"
+  },
+
+  "settings": {
+    "title": "@:navigation.settings",
+    "behaviour-ui": "動作とUI",
+    "locale": "言語",
+    "locale:description": "言語を選択してください",
+    "theme": "テーマ",
+    "theme:description": "テーマ。システムテーマを使用している場合、変更後にアプリを再読み込みする必要があります。",
+    "theme:system": "システム",
+    "theme:light": "ライト",
+    "theme:dark": "ダーク",
+    "color": "カラー",
+    "color:description": "カラー。上部アプリバーの色が変わります。",
+    "show-files-after-scan:description": "スキャン完了後にファイルを表示する",
+    "devices": "デバイスとストレージ",
+    "reset:description": "保存されたスキャナーデバイスを消去して再読み込みします",
+    "reset": "リセット",
+    "clear-storage:description": "キャッシュされたパラメーターのローカルストレージを消去します",
+    "clear-storage": "消去"
+  },
+
+  "locales": {
+    "ar": "العربية",
+    "cs": "Čeština",
+    "de": "Deutsch",
+    "en": "English (UK)",
+    "en-US": "English (US)",
+    "es": "Español",
+    "fr": "Français",
+    "hu": "Magyar",
+    "it": "Italiano",
+    "ja": "日本語",
+    "nl": "Nederlands",
+    "pl": "Polski",
+    "pt": "Portuguese (Portugal)",
+    "pt-BR": "Portuguese (Brazilian)",
+    "ru": "Russian",
+    "sk": "Slovenčina",
+    "tr": "Türkçe",
+    "uk": "Yкраїнська",
+    "zh": "简体中文",
+    "test": "Test"
+  }
+}
