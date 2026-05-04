@@ -1,6 +1,6 @@
 # Builder image
 #
-# The builder image builds the core javascript app and debian package
+# Builds the JavaScript app and installs production-only node dependencies.
 # ==============================================================================
 FROM node:18-bookworm-slim AS scanservjs-build
 ENV APP_DIR=/app
@@ -15,47 +15,32 @@ RUN npm clean-install .
 COPY app-server/ "$APP_DIR/app-server/"
 COPY app-ui/ "$APP_DIR/app-ui/"
 
-RUN npm run build
+RUN npm run build \
+  && npm clean-install --omit=dev --prefix dist \
+  && find dist -name "*.map" -type f -delete
 
-COPY makedeb.sh "$APP_DIR/"
-RUN ./makedeb.sh
-
-# Sane image
+# Base image
 #
-# This is the minimum bookworm/node/sane image required which is used elsewhere.
-# Dependencies are installed here in order to anticipate and cache what will
-# be required by the deb package. It would all still work perfectly well if this
-# layer did not exist but testing would be slower and more painful.
+# Installs OS-level dependencies shared across all targets.
 # ==============================================================================
 FROM debian:bookworm-slim AS scanservjs-base
 RUN apt-get update \
   && apt-get install -yq \
     nodejs \
-    adduser \
+    gosu \
     imagemagick \
-    ipp-usb \
     sane-airscan \
     sane-utils \
     tesseract-ocr \
-    tesseract-ocr-ces \
-    tesseract-ocr-deu \
-    tesseract-ocr-eng \
-    tesseract-ocr-spa \
-    tesseract-ocr-fra \
-    tesseract-ocr-ita \
-    tesseract-ocr-nld \
-    tesseract-ocr-pol \
-    tesseract-ocr-por \
-    tesseract-ocr-rus \
-    tesseract-ocr-tur \
-    tesseract-ocr-chi-sim \
-  && rm -rf /var/lib/apt/lists/*;
+    tesseract-ocr-jpn \
+  && rm -rf /var/lib/apt/lists/* \
+  && echo "airscan" >> /etc/sane.d/dll.conf \
+  && sed -i 's/^#discovery = enable/discovery = disable/' /etc/sane.d/airscan.conf
 
 # Core image
 #
-# This is the minimum core image required. It installs the base dependencies for
-# sane and tesseract. The executing user remains ROOT. If you want to build your
-# own image with drivers then this is likely the image to start from.
+# Minimum image required to run scanservjs. The executing user is root.
+# If you want to build your own image with additional drivers, start from here.
 # ==============================================================================
 FROM scanservjs-base AS scanservjs-core
 ENV \
@@ -63,59 +48,62 @@ ENV \
   SANED_NET_HOSTS="" \
   # This gets added to /etc/sane.d/airscan.conf
   AIRSCAN_DEVICES="" \
-  # This gets added to /etc/sane.d/pimxa.conf
+  # This gets added to /etc/sane.d/pixma.conf
   PIXMA_HOSTS="" \
   # This directs scanserv not to bother querying `scanimage -L`
   SCANIMAGE_LIST_IGNORE="" \
   # This gets added to scanservjs/server/config.js:devices
   DEVICES="" \
   # Override OCR language
-  OCR_LANG=""
+  OCR_LANG="" \
+  # Runtime user/group (0 = run as root)
+  PUID=0 \
+  PGID=0
 
-# Copy entry point
+# Create runtime directories and configure ImageMagick policies
+RUN mkdir -p \
+      /var/lib/scanservjs/output \
+      /var/lib/scanservjs/preview \
+      /var/lib/scanservjs/temp \
+      /var/lib/scanservjs/thumbnail \
+      /etc/scanservjs \
+  && if [ -d /etc/ImageMagick-6 ]; then \
+       sed -i 's/rights="none" pattern="PDF"/rights="read | write" pattern="PDF"/' /etc/ImageMagick-6/policy.xml; \
+       sed -i 's/name="disk" value="1GiB"/name="disk" value="8GiB"/' /etc/ImageMagick-6/policy.xml; \
+     fi \
+  && if [ -d /etc/ImageMagick-7 ]; then \
+       sed -i 's/rights="none" pattern="PDF"/rights="read | write" pattern="PDF"/' /etc/ImageMagick-7/policy.xml; \
+       sed -i 's/name="disk" value="2GiB"/name="disk" value="8GiB"/' /etc/ImageMagick-7/policy.xml; \
+       sed -i 's/domain="path" rights="none" pattern="@/domain="path" rights="read" pattern="@/' /etc/ImageMagick-7/policy.xml; \
+     fi
+
+# Copy app files from builder
+COPY --from=scanservjs-build /app/dist/client            /usr/lib/scanservjs/client
+COPY --from=scanservjs-build /app/dist/server            /usr/lib/scanservjs/server
+COPY --from=scanservjs-build /app/dist/node_modules      /usr/lib/scanservjs/node_modules
+COPY --from=scanservjs-build /app/dist/package.json      /usr/lib/scanservjs/
+COPY --from=scanservjs-build /app/dist/package-lock.json /usr/lib/scanservjs/
+COPY --from=scanservjs-build /app/dist/data/preview/     /var/lib/scanservjs/preview/
+COPY --from=scanservjs-build /app/dist/config/           /etc/scanservjs/
+
+# Create symlinks the app uses to locate data and config at runtime
+RUN ln -s /var/lib/scanservjs /usr/lib/scanservjs/data \
+  && ln -s /etc/scanservjs /usr/lib/scanservjs/config
+
 COPY entrypoint.sh /entrypoint.sh
-RUN ["chmod", "+x", "/entrypoint.sh"]
-ENTRYPOINT [ "/entrypoint.sh" ]
-
-# Copy the code and install
-COPY --from=scanservjs-build "/app/debian/scanservjs_*.deb" "/"
-RUN apt-get install ./scanservjs_*.deb \
-  && rm -f ./scanservjs_*.deb
+RUN chmod +x /entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh"]
 
 WORKDIR /usr/lib/scanservjs
 
 EXPOSE 8080
-
-# User2001 image
-#
-# This image changes the executing user to 2001 for increased security. This
-# also, however, leads to some runtime issues with parameters. This was the
-# default behaviour from v2.9.0 until v2.18.1 and was because issue #177. This
-# stage is kept for backwards compatibility.
-# ==============================================================================
-FROM scanservjs-core AS scanservjs-user2001
-
-# Make it possible to override the UID/GID/username of the user running
-# scanservjs
-ARG UID=2001
-ARG GID=2001
-ARG UNAME=scanservjs
-
-# Create a known user, and change ownership on relevant files (the entrypoint
-# script and $APP_DIR must be readable to run the service itself, and some
-# config files need write access).
-RUN groupadd -g $GID -o $UNAME \
-  && useradd -o -u $UID -g $GID -m -s /bin/bash $UNAME \
-  && chown -R $UID:$GID /entrypoint.sh /var/lib/scanservjs /etc/sane.d/net.conf /etc/sane.d/airscan.conf
-USER $UNAME
 
 # default build
 FROM scanservjs-core
 
 # hplip image
 #
-# This image adds the HP scanner libs to the image. This target is not built by
-# default - you will need to specifically target it.
+# Adds HP scanner libs. Not built by default — specify --target scanservjs-hplip.
 # ==============================================================================
 FROM scanservjs-core AS scanservjs-hplip
 RUN apt-get update \
@@ -126,9 +114,7 @@ RUN apt-get update \
 
 # brscan4 image
 #
-# This image includes the brscan4 driver which is needed for some Brother
-# printers/scanners. This target is not built by default -
-# you will need to specifically target it.
+# Adds Brother scanner driver. Not built by default — specify --target scanservjs-brscan4.
 # ==============================================================================
 FROM scanservjs-core AS scanservjs-brscan4
 RUN apt-get update \

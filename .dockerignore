@@ -1,0 +1,12 @@
+.git
+.github
+.jekyll-metadata
+
+node_modules
+**/node_modules
+
+dist
+docs
+logs
+
+**/test

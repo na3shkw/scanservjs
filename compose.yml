@@ -1,0 +1,13 @@
+services:
+  scanservjs:
+    build:
+      context: .
+    container_name: scanservjs
+    env_file:
+      - .env
+    volumes:
+      - ./scans:/var/lib/scanservjs/output
+      - ./config:/etc/scanservjs
+    ports:
+      - 8080:8080
+    network_mode: host

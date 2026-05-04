@@ -41,4 +41,15 @@ fi
 unset IFS
 set +f
 
-node ./server/server.js
+# Drop privileges if PUID is set to a non-root value
+PUID=${PUID:-0}
+PGID=${PGID:-0}
+
+if [ "$PUID" != "0" ]; then
+  groupadd -g "$PGID" -o scanservjs 2>/dev/null || groupmod -g "$PGID" -o scanservjs
+  useradd -o -u "$PUID" -g "$PGID" -s /bin/bash scanservjs 2>/dev/null || usermod -u "$PUID" -g "$PGID" scanservjs
+  chown -R "$PUID:$PGID" /var/lib/scanservjs /etc/sane.d/net.conf /etc/sane.d/airscan.conf
+  exec gosu scanservjs node ./server/server.js
+fi
+
+exec node ./server/server.js
