@@ -89,6 +89,14 @@ module.exports = new class Process {
       });
 
       if (stdin) {
+        proc.stdin.on('error', (err) => {
+          // EPIPE occurs when the child process exits before consuming all stdin
+          // (e.g. commands like `ls` that don't read stdin). The 'close' event
+          // handles the exit code, so EPIPE here is safe to ignore.
+          if (err.code !== 'EPIPE' && !options.ignoreErrors) {
+            reject(err);
+          }
+        });
         proc.stdin.write(stdin);
         proc.stdin.end();
       }
